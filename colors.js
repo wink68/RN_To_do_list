@@ -3,4 +3,5 @@ export const theme = {
   grey: "#3A3D40",
   white: "#fff",
   toDoBg: "#5C5C60",
+  delete: "#BEC4CD",
 };

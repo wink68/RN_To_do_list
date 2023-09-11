@@ -1,8 +1,10 @@
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { theme } from "./colors";
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { theme } from "./colors";
+import { Fontisto } from '@expo/vector-icons';
 
 const STORAGE_KEY = "@toDos";
 
@@ -46,6 +48,23 @@ export default function App() {
     await AsyncStorage.setItem(STORAGE_KEY, stringToDo)
   };
 
+  // to do list 삭제
+  const deleteToDo = (key) => {
+    Alert.alert("Delete To Do", "Are you sure?", [
+      { text: "Cancel" },
+      {
+        text: "I'm Sure",
+        style: "destructive",
+        onPress: () => {
+          const newToDos = { ...toDos };
+          delete newToDos[key];
+          setToDos(newToDos);
+          saveToDos(newToDos);
+        },
+      },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -59,6 +78,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
       <TextInput
+        value={text}
         style={styles.input}
         placeholder={working ? "Add a To Do" : "Where do you want to go?"}
         onChange={onChangeText}
@@ -71,6 +91,11 @@ export default function App() {
           toDos[key].working === working ? (
             <View style={styles.toDo} key={key}>
               <Text style={styles.toDoText}>{toDos[key].text}</Text>
+              <TouchableOpacity
+                onPress={() => deleteToDo(key)}
+              >
+                <Fontisto name="trash" size={20} color={theme.delete} />
+              </TouchableOpacity>
             </View>
           ) : null
         )}
@@ -107,6 +132,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingVertical: 20,
     paddingHorizontal: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: theme.grey,
     borderRadius: 15,
   },
