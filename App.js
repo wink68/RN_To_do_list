@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { theme } from "./colors";
@@ -25,6 +25,40 @@ export default function App() {
   };
 
   const onChangeText = ({ nativeEvent: { text }}) => setText(text);
+
+  // 항목 개수 계산
+  const getProgress = () => {
+    const filteredToDos = Object.values(toDos).filter((todo) => todo.working === working);
+    const total = filteredToDos.length;
+    const completed = filteredToDos.filter((todo) => todo.completed).length;
+  
+    return {
+      total,
+      completed,
+      percentage: total === 0 ? 0 : Math.floor((completed / total) * 100),
+    };
+  };
+
+  
+  // 진행바
+  const ProgressBar = () => {
+    const { total, completed, percentage } = getProgress();
+
+    // 너비 계산
+    const screenWidth = Dimensions.get('window').width;
+    const containerWidth = screenWidth * 0.75;
+    const progressBarWidth = containerWidth * (percentage / 100);
+
+    return (
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <View style={{ ...styles.progressBarContainer, width: containerWidth }}>
+          <View style={{ ...styles.progress, width: progressBarWidth }} />
+        </View>
+        <Text style={styles.progressText}>{percentage}%</Text>
+      </View>
+    );
+  };
+
 
   // to do list 가져오기
   const loadToDos = async (toSave) => {
@@ -115,6 +149,38 @@ export default function App() {
           <Text style={{ ...styles.btnText, color: !working ? theme.white : theme.grey }}>Travel</Text>
         </TouchableOpacity>
       </View>
+
+      {/* 진행바 */}
+      <ProgressBar />
+      
+      {/* to do list */}
+      <ScrollView>
+        {Object.keys(toDos).map((key) =>
+          toDos[key].working === working ? (
+            <View style={styles.toDo} key={key}>
+              <View style={styles.checkboxAndTextContainer}>
+                <View style={styles.checkboxCon}>
+                  <TouchableOpacity onPress={() => handleCheckbox(key)}>
+                    <Fontisto name={toDos[key].completed ? "checkbox-active" : "checkbox-passive"} size={20} color={theme.white} />
+                  </TouchableOpacity>
+                  <Text style={[
+                    styles.toDoText, 
+                    toDos[key].completed && { 
+                      textDecorationLine: 'line-through', 
+                      color: theme.disableFont,
+                    }
+                  ]}>
+                    {toDos[key].text}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => deleteToDo(key)}>
+                <Fontisto name="trash" size={20} color={theme.delete} />
+              </TouchableOpacity>
+            </View>
+          ) : null
+        )}
+      </ScrollView>
       <TextInput
         value={text}
         style={styles.input}
@@ -124,30 +190,6 @@ export default function App() {
         returnKeyType="done"
         autoCorrect={true} // 자동완성
       />
-      {/* to do list */}
-      <ScrollView>
-        {Object.keys(toDos).map((key) =>
-          toDos[key].working === working ? (
-            <View style={styles.toDo} key={key}>
-              <TouchableOpacity onPress={() => handleCheckbox(key)}>
-                <Fontisto name={toDos[key].completed ? "checkbox-active" : "checkbox-passive"} size={20} color={theme.white} />
-              </TouchableOpacity>
-              <Text style={[
-                styles.toDoText, 
-                toDos[key].completed && { 
-                  textDecorationLine: 'line-through', 
-                  color: theme.disable
-                }
-              ]}>
-                {toDos[key].text}
-              </Text>
-              <TouchableOpacity onPress={() => deleteToDo(key)}>
-                <Fontisto name="trash" size={20} color={theme.disable} />
-              </TouchableOpacity>
-            </View>
-          ) : null
-        )}
-      </ScrollView>
     </View>
   );
 }
@@ -168,13 +210,24 @@ const styles = StyleSheet.create({
     fontSize: 38,
     fontWeight: "600",
   },
-  input: {
-    marginVertical: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: theme.white,
-    borderRadius: 30,
+  progressBarContainer: {
+    height: 2,
+    backgroundColor: "#3A3D40",
+    alignItems: "center",
+    marginVertical: 35,
+    flexDirection: "row",
+    borderRadius: 20,
+  },
+  progress: {
+    height: 2,
+    backgroundColor: "#F4F7FB",
+    borderRadius: 20,
+  },
+  progressText: {
+    marginLeft: 10,
+    color: "#fff",
     fontSize: 16,
+    fontWeight: "500",
   },
   toDo: {
     marginBottom: 10,
@@ -183,12 +236,33 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    flexWrap: 'wrap',
     backgroundColor: theme.grey,
     borderRadius: 15,
   },
+  checkboxAndTextContainer: {
+    flexDirection: "row",
+    flex: 1,
+    marginRight: 10,
+  },
   toDoText: {
+    marginLeft: 10,
+    marginRight: 15,
     color: theme.ableFont,
     fontSize: 16,
     fontWeight: "500",
-  }
+  },
+  checkboxCon: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 1,
+  },
+  input: {
+    marginVertical: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: theme.white,
+    borderRadius: 30,
+    fontSize: 16,
+  },
 });
