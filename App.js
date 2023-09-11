@@ -7,14 +7,22 @@ import { theme } from "./colors";
 import { Fontisto } from '@expo/vector-icons';
 
 const STORAGE_KEY = "@toDos";
+const WORKING_STATE_KEY = "@workingState";
 
 export default function App() {
   const [working, setWorking] = useState(true);
   const [text, setText] = useState("");
   const [toDos, setToDos] = useState({});
 
-  const travel = () => setWorking(false);
-  const work = () => setWorking(true);
+  const travel = () => {
+    setWorking(false);
+    saveWorkingState(false);
+  };
+  
+  const work = () => {
+    setWorking(true);
+    saveWorkingState(true);
+  };
 
   const onChangeText = ({ nativeEvent: { text }}) => setText(text);
 
@@ -27,6 +35,7 @@ export default function App() {
 
   useEffect(() => {
     loadToDos();
+    loadWorkingState();
   }, []);
 
   // to do list 추가
@@ -65,11 +74,33 @@ export default function App() {
     ]);
   };
 
+  // 체크박스 함수
   const handleCheckbox = (key) => {
     const newToDos = { ...toDos };
     newToDos[key].completed = !newToDos[key].completed;
     setToDos(newToDos);
     saveToDos(newToDos);
+  };
+  
+  // working 상태를 저장하는 함수
+  const saveWorkingState = async (state) => {
+    try {
+      await AsyncStorage.setItem(WORKING_STATE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  
+  // 저장된 working 상태를 불러오는 함수
+  const loadWorkingState = async () => {
+    try {
+      const savedWorkingState = await AsyncStorage.getItem(WORKING_STATE_KEY);
+      if (savedWorkingState !== null) {
+        setWorking(JSON.parse(savedWorkingState));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
@@ -105,7 +136,7 @@ export default function App() {
                 styles.toDoText, 
                 toDos[key].completed && { 
                   textDecorationLine: 'line-through', 
-                  color: theme.disable 
+                  color: theme.disable
                 }
               ]}>
                 {toDos[key].text}
