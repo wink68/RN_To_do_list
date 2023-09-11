@@ -35,7 +35,7 @@ export default function App() {
       return;
     }
     const newToDos = {
-      ...toDos, [ Date.now() ]: { text, working },
+      ...toDos, [ Date.now() ]: { text, working, completed: false },
     };
     setToDos(newToDos);
     await saveToDos(newToDos);
@@ -65,6 +65,13 @@ export default function App() {
     ]);
   };
 
+  const handleCheckbox = (key) => {
+    const newToDos = { ...toDos };
+    newToDos[key].completed = !newToDos[key].completed;
+    setToDos(newToDos);
+    saveToDos(newToDos);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -86,15 +93,25 @@ export default function App() {
         returnKeyType="done"
         autoCorrect={true} // 자동완성
       />
+      {/* to do list */}
       <ScrollView>
         {Object.keys(toDos).map((key) =>
           toDos[key].working === working ? (
             <View style={styles.toDo} key={key}>
-              <Text style={styles.toDoText}>{toDos[key].text}</Text>
-              <TouchableOpacity
-                onPress={() => deleteToDo(key)}
-              >
-                <Fontisto name="trash" size={20} color={theme.delete} />
+              <TouchableOpacity onPress={() => handleCheckbox(key)}>
+                <Fontisto name={toDos[key].completed ? "checkbox-active" : "checkbox-passive"} size={20} color={theme.white} />
+              </TouchableOpacity>
+              <Text style={[
+                styles.toDoText, 
+                toDos[key].completed && { 
+                  textDecorationLine: 'line-through', 
+                  color: theme.disable 
+                }
+              ]}>
+                {toDos[key].text}
+              </Text>
+              <TouchableOpacity onPress={() => deleteToDo(key)}>
+                <Fontisto name="trash" size={20} color={theme.disable} />
               </TouchableOpacity>
             </View>
           ) : null
@@ -139,7 +156,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   toDoText: {
-    color: theme.white,
+    color: theme.ableFont,
     fontSize: 16,
     fontWeight: "500",
   }
